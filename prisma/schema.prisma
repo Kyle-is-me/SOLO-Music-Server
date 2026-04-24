@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Song {
+  id          Int      @id @default(autoincrement())
+  title       String
+  filePath    String   @unique
+  duration    Float    @default(0)
+  bitrate     Int      @default(0)
+  sampleRate  Int      @default(0)
+  format      String   @default("")
+  fileSize    Int      @default(0)
+  coverPath   String   @default("")
+  albumId     Int?
+  artistId    Int?
+  album       Album?   @relation(fields: [albumId], references: [id])
+  artist      Artist?  @relation(fields: [artistId], references: [id])
+  lyrics      Lyrics?
+  favorites   Favorite[]
+  playHistory PlayHistory[]
+  playlists   PlaylistSong[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([title])
+  @@index([albumId])
+  @@index([artistId])
+}
+
+model Album {
+  id          Int      @id @default(autoincrement())
+  name        String
+  coverPath   String   @default("")
+  releaseYear Int?
+  artistId    Int?
+  artist      Artist?  @relation(fields: [artistId], references: [id])
+  songs       Song[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@index([artistId])
+}
+
+model Artist {
+  id        Int      @id @default(autoincrement())
+  name      String
+  avatar    String   @default("")
+  bio       String   @default("")
+  albums    Album[]
+  songs     Song[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([name])
+}
+
+model Playlist {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String   @default("")
+  coverPath   String   @default("")
+  songs       PlaylistSong[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+}
+
+model PlaylistSong {
+  id         Int      @id @default(autoincrement())
+  playlistId Int
+  songId     Int
+  order      Int      @default(0)
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  song       Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  addedAt    DateTime @default(now())
+
+  @@unique([playlistId, songId])
+  @@index([playlistId])
+  @@index([songId])
+}
+
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  songId    Int
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([songId])
+}
+
+model PlayHistory {
+  id        Int      @id @default(autoincrement())
+  songId    Int
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  playedAt  DateTime @default(now())
+
+  @@index([songId])
+  @@index([playedAt])
+}
+
+model Lyrics {
+  id        Int      @id @default(autoincrement())
+  songId    Int      @unique
+  song      Song     @relation(fields: [songId], references: [id], onDelete: Cascade)
+  content   String
+  offset    Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
